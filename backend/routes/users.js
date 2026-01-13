@@ -1,0 +1,66 @@
+import express from "express";
+import pool from "../db/connection.js";
+
+const router = express.Router();
+
+
+router.get("/", async (req, res) => {
+  try {
+    const [rows] = await pool.query("SELECT * FROM users");
+    res.json(rows);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+
+router.post("/", async (req, res) => {
+  const { name, email } = req.body;
+
+  try {
+    const [result] = await pool.query(
+      "INSERT INTO users (username, email) VALUES (?, ?)",
+      [name, email]
+    );
+    res.json({ id: result.insertId, name, email });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+router.delete("/:id", async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const [result] = await pool.query("DELETE FROM users WHERE id = ?", [id]);
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    res.json({ message: "User deleted successfully" });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+
+app.put('/api/users/:id/role', async (req, res) => {
+  const { id } = req.params
+  const { role } = req.body
+
+  if (!role) return res.status(400).json({ message: 'Role is required' })
+
+  try {
+    const [result] = await pool.query('UPDATE users SET role = ? WHERE id = ?', [role, id])
+    if (result.affectedRows === 0) return res.status(404).json({ message: 'User not found' })
+    res.json({ message: 'Role updated successfully' })
+  } catch (err) {
+    console.error(err)
+    res.status(500).json({ message: 'Failed to update role' })
+  }
+})
+
+
+
+
+
+export default router;
